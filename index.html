@@ -1,0 +1,1634 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Simulador Estadístico Unicauca | TCL e Intervalos de Confianza</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Simulador interactivo de estadística inferencial para TCL, errores e intervalos de confianza aplicado al contexto empresarial del Cauca.">
+  <style>
+    :root {
+      --bg:#081321;
+      --bg-soft:#0d1b2a;
+      --surface:rgba(255,255,255,.9);
+      --surface-2:#ffffff;
+      --text:#142033;
+      --muted:#5b6780;
+      --line:#dfe7f3;
+      --brand:#0c4a6e;
+      --brand-2:#0ea5e9;
+      --brand-3:#38bdf8;
+      --accent:#0f766e;
+      --good:#ecfdf5;
+      --good-line:#86efac;
+      --warn:#fff7ed;
+      --warn-line:#fdba74;
+      --bad:#fef2f2;
+      --bad-line:#fca5a5;
+      --shadow:0 18px 60px rgba(2,12,27,.12);
+      --radius:22px;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;color:var(--text);background:
+      radial-gradient(circle at top right, rgba(56,189,248,.18), transparent 26%),
+      radial-gradient(circle at top left, rgba(14,165,233,.14), transparent 18%),
+      linear-gradient(180deg, #eef6ff 0%, #f7fbff 22%, #f4f7fb 100%);line-height:1.6}
+    a{color:inherit}
+    .shell{width:min(1400px,92vw);margin:0 auto}
+    .hero{position:relative;overflow:hidden;padding:56px 0 28px;background:linear-gradient(135deg,#07213a 0%, #0b3d68 48%, #0e7490 100%);color:white}
+    .hero::before{content:"";position:absolute;inset:0;background:
+      radial-gradient(circle at 20% 20%, rgba(255,255,255,.18), transparent 18%),
+      radial-gradient(circle at 90% 15%, rgba(255,255,255,.12), transparent 22%),
+      linear-gradient(180deg, transparent, rgba(255,255,255,.04));pointer-events:none}
+    .hero-grid{position:relative;display:grid;grid-template-columns:1.3fr .9fr;gap:28px;align-items:center}
+    .hero-card{background:rgba(255,255,255,.10);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.18);border-radius:26px;padding:24px;box-shadow:0 16px 40px rgba(0,0,0,.18)}
+    .eyebrow{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.12);font-size:13px;font-weight:700;letter-spacing:.02em;text-transform:uppercase}
+    .hero h1{margin:16px 0 10px;font-size:clamp(2rem,4vw,3.6rem);line-height:1.08;max-width:900px}
+    .hero p.lead{font-size:1.08rem;opacity:.96;max-width:850px;margin:0 0 20px}
+    .hero-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:18px}
+    .hero-actions a{text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:700}
+    .hero-actions .primary{background:#fff;color:#0b3d68}
+    .hero-actions .ghost{border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.08);color:#fff}
+    .mini-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .mini-stat{padding:16px;border-radius:18px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15)}
+    .mini-stat .n{display:block;font-size:1.6rem;font-weight:800}
+    .mini-stat .l{font-size:.92rem;opacity:.92}
+    .subnav-wrap{position:sticky;top:0;z-index:25;backdrop-filter:blur(14px);background:rgba(247,251,255,.78);border-bottom:1px solid rgba(223,231,243,.9)}
+    nav.subnav{display:flex;gap:10px;flex-wrap:wrap;padding:12px 0}
+    nav.subnav a{text-decoration:none;padding:10px 14px;border-radius:999px;background:#fff;border:1px solid var(--line);box-shadow:0 6px 18px rgba(15,23,42,.05);font-weight:700;color:#12324d}
+    main{padding:26px 0 60px}
+    .section{margin:18px 0 26px}
+    .section-card{background:rgba(255,255,255,.85);border:1px solid rgba(255,255,255,.65);backdrop-filter:blur(10px);border-radius:28px;box-shadow:var(--shadow);padding:26px}
+    .section-head{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;margin-bottom:18px;flex-wrap:wrap}
+    .section-title h2{margin:0;font-size:clamp(1.55rem,2vw,2.15rem);color:#0b3152}
+    .section-title p{margin:8px 0 0;color:var(--muted);max-width:850px}
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#e0f2fe;color:#075985;font-weight:800;font-size:.82rem}
+    .features{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+    .feature{padding:20px;border-radius:22px;background:linear-gradient(180deg,#fff,#f6fbff);border:1px solid var(--line);box-shadow:0 10px 30px rgba(15,23,42,.05)}
+    .feature h3{margin:10px 0 8px;color:#0f3252}
+    .feature p{margin:0;color:var(--muted)}
+    .feature .icon{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,#e0f2fe,#dbeafe);font-size:22px}
+    .layout{display:grid;grid-template-columns:minmax(320px,430px) 1fr;gap:20px;align-items:start}
+    .panel{background:linear-gradient(180deg,#ffffff,#fbfdff);border:1px solid var(--line);border-radius:24px;padding:20px;box-shadow:0 14px 32px rgba(15,23,42,.05)}
+    .panel.sticky{position:sticky;top:82px}
+    .panel h3{margin:2px 0 12px;color:#10314f}
+    .field-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+    label{display:block;font-size:13px;color:#344256;margin:10px 0 6px;font-weight:800;letter-spacing:.01em}
+    input,select,textarea{width:100%;padding:12px 14px;border:1px solid #d5deea;border-radius:14px;font-size:15px;background:#fff;color:#152238;outline:none;transition:.18s box-shadow,.18s border-color}
+    input:focus,select:focus,textarea:focus{border-color:#38bdf8;box-shadow:0 0 0 4px rgba(56,189,248,.16)}
+    textarea{min-height:92px;resize:vertical}
+    .actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+    button{border:0;padding:12px 16px;border-radius:14px;font-weight:800;cursor:pointer;background:linear-gradient(135deg,#0b5c84,#0284c7);color:white;box-shadow:0 10px 22px rgba(2,132,199,.18);transition:transform .12s ease,filter .12s ease}
+    button:hover{filter:brightness(.98);transform:translateY(-1px)}
+    button.secondary{background:linear-gradient(135deg,#475569,#334155)}
+    button.light{background:#f0f9ff;color:#075985;box-shadow:none;border:1px solid #bae6fd}
+    button.warn{background:linear-gradient(135deg,#d97706,#b45309)}
+    .small{font-size:.92rem;color:var(--muted)}
+    .kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:16px 0}
+    .kpi div{padding:15px;border-radius:18px;background:linear-gradient(180deg,#fbfdff,#f4f8fc);border:1px solid var(--line)}
+    .kpi span{display:block;color:var(--muted);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+    .kpi b{display:block;color:#0b3558;font-size:1.25rem;margin-top:6px;word-break:break-word}
+    .tag{display:inline-flex;align-items:center;gap:8px;background:#e0f2fe;color:#075985;padding:6px 12px;border-radius:999px;font-weight:800;font-size:12px;letter-spacing:.03em;text-transform:uppercase}
+    .eq,.result,.warning,.error{padding:14px 16px;border-radius:18px;margin:14px 0;overflow:auto}
+    .eq{background:#f8fbff;border:1px solid #dbeafe;border-left:6px solid #0ea5e9;font-size:1rem}
+    .result{background:var(--good);border:1px solid var(--good-line)}
+    .warning{background:var(--warn);border:1px solid var(--warn-line)}
+    .error{background:var(--bad);border:1px solid var(--bad-line)}
+    .svg-wrap{background:linear-gradient(180deg,#fff,#fcfdff);border:1px solid var(--line);border-radius:22px;padding:14px;margin:14px 0;overflow-x:auto;box-shadow:inset 0 1px 0 rgba(255,255,255,.8)}
+    .legend{display:flex;flex-wrap:wrap;gap:10px 16px;font-size:14px;margin:10px 2px 0}
+    .legend i{display:inline-block;width:14px;height:14px;border-radius:4px;margin-right:7px;vertical-align:-2px}
+    .button-cloud{display:flex;flex-wrap:wrap;gap:10px}
+    table{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:0 14px 34px rgba(15,23,42,.05);margin:16px 0}
+    th,td{padding:12px 14px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+    th{background:linear-gradient(135deg,#0b3558,#0c4a6e);color:#fff;position:sticky;top:0}
+    tr:last-child td{border-bottom:none}
+    .guide-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+    .guide{padding:20px;border-radius:22px;background:linear-gradient(180deg,#ffffff,#f7fbff);border:1px solid var(--line)}
+    .footer{padding:16px 0 30px;color:var(--muted);text-align:center;font-size:.95rem}
+    .hide{display:none!important}
+    @media (max-width:1100px){.hero-grid,.features,.guide-grid,.layout{grid-template-columns:1fr} .panel.sticky{position:static}}
+    @media (max-width:720px){.shell{width:min(96vw,1400px)} .section-card{padding:18px} nav.subnav a{font-size:.92rem} .hero{padding-top:34px} .hero-card{padding:18px} }
+    @media print{.subnav-wrap,button,.hero-actions{display:none!important} body{background:#fff} .section-card,.panel{box-shadow:none;border:1px solid var(--line)} .hero{background:#fff;color:#111;padding:0} .hero-card{border:1px solid var(--line);background:#fff;color:#111;box-shadow:none} }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="shell hero-grid">
+      <div>
+        <span class="eyebrow">📊 Simulador académico • Unicauca • HTML interactivo</span>
+        <h1>Estadística inferencial con una interfaz mucho más visual, clara y profesional</h1>
+        <p class="lead">Explora el Teorema Central del Límite, compara errores, construye Intervalos de Confianza y analiza casos empresariales del Cauca con cálculos paso a paso, gráficas SVG e interpretación gerencial.</p>
+        <div class="hero-actions">
+          <a class="primary" href="#modulo-tcl">Empezar simulación</a>
+          <a class="ghost" href="#validacion">Ver casos reales</a>
+        </div>
+      </div>
+      <div class="hero-card">
+        <div class="mini-stats">
+          <div class="mini-stat"><span class="n">3</span><span class="l">Módulos integrados</span></div>
+          <div class="mini-stat"><span class="n">14</span><span class="l">Casos listos para validar</span></div>
+          <div class="mini-stat"><span class="n">100%</span><span class="l">Compatible con GitHub Pages</span></div>
+          <div class="mini-stat"><span class="n">Auto</span><span class="l">Elección Z, t y proporciones</span></div>
+        </div>
+      </div>
+    </div>
+  </header>
+  <div class="subnav-wrap">
+    <div class="shell">
+      <nav class="subnav">
+        <a href="#inicio">Inicio</a>
+        <a href="#modulo-tcl">Módulo TCL</a>
+        <a href="#modulo-errores">Errores</a>
+        <a href="#modulo-ic">Intervalos</a>
+        <a href="#validacion">Casos reales</a>
+        <a href="#guia">Guía</a>
+      </nav>
+    </div>
+  </div>
+  <main class="shell">
+    <section id="inicio" class="section">
+      <div class="section-card">
+        <div class="section-head">
+          <div class="section-title">
+            <span class="pill">✨ Diseño renovado</span>
+            <h2>Un simulador pensado para calcular, enseñar y sustentar</h2>
+            <p>La información se mantiene, pero la presentación mejora con una interfaz más limpia, jerarquía visual fuerte, paneles diferenciados, resultados destacados y mejor legibilidad para exposición académica.</p>
+          </div>
+        </div>
+        <div class="features">
+          <article class="feature"><div class="icon">📈</div><h3>Teorema Central del Límite</h3><p>Distribución de la media muestral, tipificación Z paso a paso y probabilidades con interpretación contextual.</p></article>
+          <article class="feature"><div class="icon">🧮</div><h3>Errores estadísticos</h3><p>Diferencia clara entre error muestral y Error Estándar, mostrando fórmulas, concepto y utilidad práctica.</p></article>
+          <article class="feature"><div class="icon">🎯</div><h3>Intervalos de confianza</h3><p>Selección automática de Z, t de Student o proporciones, con recomendaciones gerenciales y visualización del intervalo.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="modulo-tcl" class="section">
+      <div class="section-card">
+        <div class="section-head">
+          <div class="section-title">
+            <span class="pill">Módulo 1</span>
+            <h2>Simulador del Teorema Central del Límite</h2>
+            <p>Ingresa tu escenario económico o empresarial, calcula el Error Estándar, tipifica con Z y observa cómo cambia la distribución de la media muestral cuando varía el tamaño de muestra.</p>
+          </div>
+        </div>
+        <div class="layout">
+          <div class="panel sticky">
+            <h3>Datos de entrada</h3>
+            <label for="tclContext">Contexto del ejercicio</label>
+            <textarea id="tclContext">Auditoría de consumo energético en hogares de Popayán.</textarea>
+            <label for="tclMu">Media poblacional μ</label>
+            <input id="tclMu" type="number" step="any" value="180">
+            <label for="tclSigma">Desviación estándar poblacional σ</label>
+            <input id="tclSigma" type="number" step="any" value="45">
+            <label for="tclN">Tamaño de muestra n</label>
+            <input id="tclN" type="number" step="1" value="40">
+            <label for="tclType">Tipo de probabilidad</label>
+            <select id="tclType" onchange="toggleTCLInputs()">
+              <option value="greater">P(X̄ > valor)</option>
+              <option value="less">P(X̄ < valor)</option>
+              <option value="between">P(a < X̄ < b)</option>
+              <option value="sumGreater">P(Suma > valor)</option>
+            </select>
+            <div id="tclSingleLimitBox">
+              <label for="tclLimit">Valor límite</label>
+              <input id="tclLimit" type="number" step="any" value="195">
+            </div>
+            <div id="tclBetweenBox" class="hide">
+              <label for="tclLower">Límite inferior a</label>
+              <input id="tclLower" type="number" step="any" value="2.3">
+              <label for="tclUpper">Límite superior b</label>
+              <input id="tclUpper" type="number" step="any" value="2.7">
+            </div>
+            <label for="tclObserved">Media observada x̄ para calcular error muestral</label>
+            <input id="tclObserved" type="number" step="any" value="195">
+            <label for="tclNs">Valores de n para comparar distribuciones</label>
+            <input id="tclNs" value="5,10,30,40,100">
+            <div class="actions">
+              <button onclick="calculateTCL()">Calcular TCL</button>
+              <button class="secondary" onclick="clearBox('tclOutput')">Limpiar</button>
+            </div>
+          </div>
+          <div id="tclOutput" class="panel">
+            <p class="small">Presiona “Calcular TCL” para ver el procedimiento, la interpretación y las gráficas.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="modulo-errores" class="section">
+      <div class="section-card">
+        <div class="section-head">
+          <div class="section-title">
+            <span class="pill">Módulo 2</span>
+            <h2>Calculador de errores</h2>
+            <p>Compara el error de una muestra específica con la dispersión esperada de muchas medias muestrales.</p>
+          </div>
+        </div>
+        <div class="layout">
+          <div class="panel sticky">
+            <h3>Datos de entrada</h3>
+            <label for="errMu">Media poblacional μ</label>
+            <input id="errMu" type="number" step="any" value="180">
+            <label for="errObserved">Media muestral observada x̄</label>
+            <input id="errObserved" type="number" step="any" value="195">
+            <label for="errSigma">Desviación estándar σ</label>
+            <input id="errSigma" type="number" step="any" value="45">
+            <label for="errN">Tamaño de muestra n</label>
+            <input id="errN" type="number" step="1" value="40">
+            <div class="actions">
+              <button onclick="calculateErrors()">Calcular errores</button>
+              <button class="secondary" onclick="clearBox('errorsOutput')">Limpiar</button>
+            </div>
+          </div>
+          <div id="errorsOutput" class="panel">
+            <p class="small">Presiona “Calcular errores” para ver fórmulas, concepto e implicación práctica.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="modulo-ic" class="section">
+      <div class="section-card">
+        <div class="section-head">
+          <div class="section-title">
+            <span class="pill">Módulo 3</span>
+            <h2>Analizador de Intervalos de Confianza</h2>
+            <p>El sistema decide automáticamente qué método usar: Z, t de Student o proporciones, según el tipo de problema y la información disponible.</p>
+          </div>
+        </div>
+        <div class="layout">
+          <div class="panel sticky">
+            <h3>Datos de entrada</h3>
+            <label for="icContext">Contexto del ejercicio</label>
+            <textarea id="icContext">Resistencia de fibras en textiles de la región.</textarea>
+            <label for="icType">Tipo de parámetro</label>
+            <select id="icType" onchange="toggleICInputs()">
+              <option value="mean">Media</option>
+              <option value="proportion">Proporción</option>
+            </select>
+            <label for="icConfidence">Nivel de confianza</label>
+            <select id="icConfidence">
+              <option value="0.90">90%</option>
+              <option value="0.95" selected>95%</option>
+              <option value="0.99">99%</option>
+            </select>
+            <label for="icN">Tamaño de muestra n</label>
+            <input id="icN" type="number" step="1" value="40">
+            <div id="icMeanInputs">
+              <label for="icXbar">Media muestral x̄</label>
+              <input id="icXbar" type="number" step="any" value="50">
+              <label for="icSigmaKnown">¿σ poblacional conocida?</label>
+              <select id="icSigmaKnown" onchange="toggleICInputs()">
+                <option value="yes">Sí, usar σ conocida</option>
+                <option value="no">No, usar s muestral</option>
+              </select>
+              <div id="icSigmaBox">
+                <label for="icSigma">Desviación estándar poblacional σ</label>
+                <input id="icSigma" type="number" step="any" value="4">
+              </div>
+              <div id="icSBox" class="hide">
+                <label for="icS">Desviación estándar muestral s</label>
+                <input id="icS" type="number" step="any" value="4">
+              </div>
+            </div>
+            <div id="icPropInputs" class="hide">
+              <label for="icSuccess">Número de éxitos x</label>
+              <input id="icSuccess" type="number" step="1" value="450">
+            </div>
+            <label for="icUnit">Unidad</label>
+            <input id="icUnit" value="unidades">
+            <label for="icGoal">Meta gerencial opcional</label>
+            <input id="icGoal" type="number" step="any" placeholder="Ej: 50 o 0.5">
+            <div class="actions">
+              <button onclick="calculateIC()">Calcular IC</button>
+              <button class="secondary" onclick="clearBox('icOutput')">Limpiar</button>
+            </div>
+          </div>
+          <div id="icOutput" class="panel">
+            <p class="small">Presiona “Calcular IC” para ver el método elegido, los resultados y la recomendación gerencial.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="validacion" class="section">
+      <div class="section-card">
+        <div class="section-head">
+          <div class="section-title">
+            <span class="pill">Validación</span>
+            <h2>Casos reales del trabajo académico</h2>
+            <p>Utiliza estos accesos rápidos para cargar los ejercicios del documento. También puedes resolverlos todos en un único resumen.</p>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>Bloque TCL</h3>
+          <div id="tclCaseButtons" class="button-cloud"></div>
+          <h3 style="margin-top:20px">Bloque Intervalos de Confianza</h3>
+          <div id="icCaseButtons" class="button-cloud"></div>
+          <div class="actions" style="margin-top:18px">
+            <button class="warn" onclick="solveAllCases()">Resolver todos los casos reales</button>
+          </div>
+          <div id="allCasesOutput"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="guia" class="section">
+      <div class="section-card">
+        <div class="section-head">
+          <div class="section-title">
+            <span class="pill">Guía rápida</span>
+            <h2>Apoyo para la sustentación oral</h2>
+            <p>Estas tarjetas resumen la lógica estadística que debes explicar cuando presentes el trabajo.</p>
+          </div>
+        </div>
+        <div class="guide-grid">
+          <article class="guide"><h3>¿Qué demuestra el TCL?</h3><p>Que la distribución de la media muestral se aproxima a la normal cuando el tamaño de muestra es suficientemente grande.</p></article>
+          <article class="guide"><h3>¿Qué es el Error Estándar?</h3><p>Es la desviación estándar de la distribución de medias muestrales. Disminuye al aumentar n, por eso mejora la precisión.</p></article>
+          <article class="guide"><h3>¿Cuándo se usa Z?</h3><p>Cuando σ poblacional es conocida o cuando la muestra es lo bastante grande para justificar aproximación normal.</p></article>
+          <article class="guide"><h3>¿Cuándo se usa t?</h3><p>Cuando σ es desconocida, se reemplaza por s y la muestra es pequeña. La distribución t incorpora esa incertidumbre adicional.</p></article>
+          <article class="guide"><h3>¿Cuándo se usan proporciones?</h3><p>Cuando el parámetro poblacional que interesa es p y se estima con p̂ = x/n.</p></article>
+          <article class="guide"><h3>¿Cómo interpretar un IC?</h3><p>Un intervalo al 95% indica que, si repites el procedimiento muchas veces, en cerca del 95% de los casos el parámetro real quedará dentro del intervalo.</p></article>
+        </div>
+      </div>
+    </section>
+    <div class="footer">Simulador Estadístico Unicauca · Interfaz HTML mejorada para GitHub Pages</div>
+  </main>
+  <script>
+
+    /*
+      ============================================================
+      UTILIDADES MATEMÁTICAS
+      ============================================================
+    */
+
+    function getNumber(id) {
+      const value = parseFloat(document.getElementById(id).value);
+      if (Number.isNaN(value)) {
+        throw new Error("El campo '" + id + "' necesita un número válido.");
+      }
+      return value;
+    }
+
+    function getInteger(id) {
+      const value = parseInt(document.getElementById(id).value, 10);
+      if (Number.isNaN(value)) {
+        throw new Error("El campo '" + id + "' necesita un número entero válido.");
+      }
+      return value;
+    }
+
+    function fmt(x, digits = 4) {
+      return Number(x).toFixed(digits);
+    }
+
+    function pct(x, digits = 4) {
+      return (100 * x).toFixed(digits) + "%";
+    }
+
+    function clearBox(id) {
+      document.getElementById(id).innerHTML = "";
+    }
+
+    function clamp(x, min, max) {
+      return Math.max(min, Math.min(max, x));
+    }
+
+    /*
+      Aproximación de la función de error erf(x).
+      Se usa para calcular la CDF de la normal estándar sin librerías externas.
+    */
+    function erf(x) {
+      const sign = x >= 0 ? 1 : -1;
+      x = Math.abs(x);
+
+      const a1 = 0.254829592;
+      const a2 = -0.284496736;
+      const a3 = 1.421413741;
+      const a4 = -1.453152027;
+      const a5 = 1.061405429;
+      const p = 0.3275911;
+
+      const t = 1 / (1 + p * x);
+      const y = 1 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+
+      return sign * y;
+    }
+
+    function normalCDF(z) {
+      return 0.5 * (1 + erf(z / Math.sqrt(2)));
+    }
+
+    function normalPDF(x, mu, sigma) {
+      return (1 / (sigma * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * Math.pow((x - mu) / sigma, 2));
+    }
+
+    /*
+      Inversa de la normal estándar.
+      Aproximación de Peter John Acklam.
+    */
+    function normalInv(p) {
+      if (p <= 0 || p >= 1) {
+        throw new Error("La probabilidad debe estar entre 0 y 1.");
+      }
+
+      const a = [
+        -3.969683028665376e+01,
+         2.209460984245205e+02,
+        -2.759285104469687e+02,
+         1.383577518672690e+02,
+        -3.066479806614716e+01,
+         2.506628277459239e+00
+      ];
+
+      const b = [
+        -5.447609879822406e+01,
+         1.615858368580409e+02,
+        -1.556989798598866e+02,
+         6.680131188771972e+01,
+        -1.328068155288572e+01
+      ];
+
+      const c = [
+        -7.784894002430293e-03,
+        -3.223964580411365e-01,
+        -2.400758277161838e+00,
+        -2.549732539343734e+00,
+         4.374664141464968e+00,
+         2.938163982698783e+00
+      ];
+
+      const d = [
+         7.784695709041462e-03,
+         3.224671290700398e-01,
+         2.445134137142996e+00,
+         3.754408661907416e+00
+      ];
+
+      const plow = 0.02425;
+      const phigh = 1 - plow;
+      let q, r;
+
+      if (p < plow) {
+        q = Math.sqrt(-2 * Math.log(p));
+        return (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) /
+               ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1);
+      }
+
+      if (phigh < p) {
+        q = Math.sqrt(-2 * Math.log(1 - p));
+        return -(((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) /
+                ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1);
+      }
+
+      q = p - 0.5;
+      r = q * q;
+
+      return (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) * q /
+             (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1);
+    }
+
+    function zCritical(confidence) {
+      const alpha = 1 - confidence;
+      return normalInv(1 - alpha / 2);
+    }
+
+    /*
+      Tablas t bilaterales para niveles de confianza comunes.
+      Para gl > 30 se aproxima con Z.
+    */
+    const tTables = {
+      "0.90": {
+        1: 6.314, 2: 2.920, 3: 2.353, 4: 2.132, 5: 2.015,
+        6: 1.943, 7: 1.895, 8: 1.860, 9: 1.833, 10: 1.812,
+        11: 1.796, 12: 1.782, 13: 1.771, 14: 1.761, 15: 1.753,
+        16: 1.746, 17: 1.740, 18: 1.734, 19: 1.729, 20: 1.725,
+        21: 1.721, 22: 1.717, 23: 1.714, 24: 1.711, 25: 1.708,
+        26: 1.706, 27: 1.703, 28: 1.701, 29: 1.699, 30: 1.697
+      },
+      "0.95": {
+        1: 12.706, 2: 4.303, 3: 3.182, 4: 2.776, 5: 2.571,
+        6: 2.447, 7: 2.365, 8: 2.306, 9: 2.262, 10: 2.228,
+        11: 2.201, 12: 2.179, 13: 2.160, 14: 2.145, 15: 2.131,
+        16: 2.120, 17: 2.110, 18: 2.101, 19: 2.093, 20: 2.086,
+        21: 2.080, 22: 2.074, 23: 2.069, 24: 2.064, 25: 2.060,
+        26: 2.056, 27: 2.052, 28: 2.048, 29: 2.045, 30: 2.042
+      },
+      "0.99": {
+        1: 63.657, 2: 9.925, 3: 5.841, 4: 4.604, 5: 4.032,
+        6: 3.707, 7: 3.499, 8: 3.355, 9: 3.250, 10: 3.169,
+        11: 3.106, 12: 3.055, 13: 3.012, 14: 2.977, 15: 2.947,
+        16: 2.921, 17: 2.898, 18: 2.878, 19: 2.861, 20: 2.845,
+        21: 2.831, 22: 2.819, 23: 2.807, 24: 2.797, 25: 2.787,
+        26: 2.779, 27: 2.771, 28: 2.763, 29: 2.756, 30: 2.750
+      }
+    };
+
+    function tCritical(confidence, df) {
+      if (df <= 0) {
+        throw new Error("Los grados de libertad deben ser positivos.");
+      }
+
+      if (df > 30) {
+        return zCritical(confidence);
+      }
+
+      const key = Number(confidence).toFixed(2);
+      const table = tTables[key];
+
+      if (!table) {
+        throw new Error("La tabla t solo está disponible para 90%, 95% y 99%.");
+      }
+
+      return table[df];
+    }
+
+    /*
+      ============================================================
+      GRÁFICAS SVG
+      ============================================================
+    */
+
+    function svgBellCurve(mu, sigma, areaType, options = {}) {
+      const width = 900;
+      const height = 360;
+      const xMin = mu - 4 * sigma;
+      const xMax = mu + 4 * sigma;
+      const xs = [];
+
+      for (let i = 0; i <= 280; i++) {
+        xs.push(xMin + i * (xMax - xMin) / 280);
+      }
+
+      const ys = xs.map(x => normalPDF(x, mu, sigma));
+      const yMax = Math.max(...ys) * 1.15;
+
+      const sx = x => 60 + (x - xMin) / (xMax - xMin) * (width - 100);
+      const sy = y => height - 45 - y / yMax * (height - 85);
+
+      const curvePoints = xs.map((x, i) => `${sx(x).toFixed(2)},${sy(ys[i]).toFixed(2)}`).join(" ");
+
+      const shaded = [];
+
+      for (let i = 0; i < xs.length; i++) {
+        const x = xs[i];
+        let include = false;
+
+        if (areaType === "greater") {
+          include = x >= options.limit;
+        } else if (areaType === "less") {
+          include = x <= options.limit;
+        } else if (areaType === "between") {
+          include = x >= options.lower && x <= options.upper;
+        }
+
+        if (include) {
+          shaded.push([sx(x), sy(ys[i])]);
+        }
+      }
+
+      let shadePath = "";
+
+      if (shaded.length > 1) {
+        const start = shaded[0];
+        const end = shaded[shaded.length - 1];
+        const middle = shaded.map(p => `${p[0].toFixed(2)} ${p[1].toFixed(2)}`).join(" L ");
+
+        shadePath = `
+          <path d="M ${start[0].toFixed(2)} ${height - 45}
+                   L ${middle}
+                   L ${end[0].toFixed(2)} ${height - 45} Z"
+                fill="#7dd3fc" opacity="0.55"/>
+        `;
+      }
+
+      let limitLines = "";
+
+      if (areaType === "greater" || areaType === "less") {
+        const xLimit = sx(options.limit);
+        limitLines += `
+          <line x1="${xLimit.toFixed(2)}" y1="25" x2="${xLimit.toFixed(2)}" y2="${height - 45}"
+                stroke="#d62728" stroke-dasharray="7,6" stroke-width="2"/>
+          <text x="${(xLimit + 6).toFixed(2)}" y="60" font-size="14">Límite ${options.limit}</text>
+        `;
+      }
+
+      if (areaType === "between") {
+        const xLower = sx(options.lower);
+        const xUpper = sx(options.upper);
+
+        limitLines += `
+          <line x1="${xLower.toFixed(2)}" y1="25" x2="${xLower.toFixed(2)}" y2="${height - 45}"
+                stroke="#d62728" stroke-dasharray="7,6" stroke-width="2"/>
+          <line x1="${xUpper.toFixed(2)}" y1="25" x2="${xUpper.toFixed(2)}" y2="${height - 45}"
+                stroke="#d62728" stroke-dasharray="7,6" stroke-width="2"/>
+          <text x="${(xLower + 6).toFixed(2)}" y="60" font-size="14">a=${options.lower}</text>
+          <text x="${(xUpper + 6).toFixed(2)}" y="82" font-size="14">b=${options.upper}</text>
+        `;
+      }
+
+      const xMu = sx(mu);
+
+      return `
+        <div class="svg-wrap">
+          <svg viewBox="0 0 ${width} ${height}" width="100%" role="img" aria-label="Campana de Gauss">
+            <rect x="0" y="0" width="${width}" height="${height}" fill="#fff"/>
+            <text x="60" y="22" font-size="16" font-weight="bold">${options.title || "Distribución normal"}</text>
+            <line x1="60" y1="${height - 45}" x2="${width - 40}" y2="${height - 45}" stroke="#444" stroke-width="1.5"/>
+            <line x1="60" y1="25" x2="60" y2="${height - 45}" stroke="#444" stroke-width="1.5"/>
+            ${shadePath}
+            <polyline points="${curvePoints}" fill="none" stroke="#1f77b4" stroke-width="3"/>
+            <line x1="${xMu.toFixed(2)}" y1="25" x2="${xMu.toFixed(2)}" y2="${height - 45}"
+                  stroke="#111" stroke-dasharray="4,5" stroke-width="2"/>
+            <text x="${(xMu + 7).toFixed(2)}" y="42" font-size="14">Media = ${fmt(mu, 3)}</text>
+            ${limitLines}
+            <text x="${width / 2 - 105}" y="${height - 12}" font-size="14">${options.xLabel || "Variable"}</text>
+            <text x="16" y="30" font-size="14">Densidad</text>
+          </svg>
+        </div>
+      `;
+    }
+
+    function svgCompareN(mu, sigma, ns, unit) {
+      const width = 900;
+      const height = 360;
+      const xMin = mu - 3 * sigma;
+      const xMax = mu + 3 * sigma;
+      const xs = [];
+
+      for (let i = 0; i <= 240; i++) {
+        xs.push(xMin + i * (xMax - xMin) / 240);
+      }
+
+      let allY = [];
+
+      ns.forEach(n => {
+        const se = sigma / Math.sqrt(n);
+        xs.forEach(x => allY.push(normalPDF(x, mu, se)));
+      });
+
+      const yMax = Math.max(...allY) * 1.15;
+
+      const sx = x => 60 + (x - xMin) / (xMax - xMin) * (width - 100);
+      const sy = y => height - 45 - y / yMax * (height - 85);
+
+      const colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#9467bd", "#d62728", "#0f766e", "#b45309"];
+      let paths = "";
+      let legend = "";
+
+      ns.forEach((n, idx) => {
+        const se = sigma / Math.sqrt(n);
+        const points = xs.map(x => `${sx(x).toFixed(2)},${sy(normalPDF(x, mu, se)).toFixed(2)}`).join(" ");
+        const color = colors[idx % colors.length];
+
+        paths += `<polyline points="${points}" fill="none" stroke="${color}" stroke-width="3"/>`;
+        legend += `<span><i style="background:${color}"></i>n=${n}, SE=${fmt(se, 3)} ${unit}</span>`;
+      });
+
+      const xMu = sx(mu);
+
+      return `
+        <div class="svg-wrap">
+          <svg viewBox="0 0 ${width} ${height}" width="100%">
+            <rect x="0" y="0" width="${width}" height="${height}" fill="#fff"/>
+            <text x="60" y="22" font-size="16" font-weight="bold">Distribución de X̄ al variar n</text>
+            <line x1="60" y1="${height - 45}" x2="${width - 40}" y2="${height - 45}" stroke="#444" stroke-width="1.5"/>
+            <line x1="60" y1="25" x2="60" y2="${height - 45}" stroke="#444" stroke-width="1.5"/>
+            ${paths}
+            <line x1="${xMu.toFixed(2)}" y1="25" x2="${xMu.toFixed(2)}" y2="${height - 45}"
+                  stroke="#111" stroke-dasharray="7,6" stroke-width="2"/>
+            <text x="${(xMu + 7).toFixed(2)}" y="42" font-size="14">μ=${mu}</text>
+            <text x="${width / 2 - 120}" y="${height - 12}" font-size="14">Media muestral X̄</text>
+            <text x="16" y="30" font-size="14">Densidad</text>
+          </svg>
+          <div class="legend">${legend}</div>
+        </div>
+      `;
+    }
+
+    function svgSECurve(sigma, currentN, unit) {
+      const width = 900;
+      const height = 330;
+      const nMax = Math.max(200, currentN * 3);
+      const ns = [];
+
+      for (let n = 2; n <= nMax; n++) {
+        ns.push(n);
+      }
+
+      const ses = ns.map(n => sigma / Math.sqrt(n));
+      const yMax = Math.max(...ses) * 1.08;
+
+      const sx = n => 60 + (n - 2) / (nMax - 2) * (width - 100);
+      const sy = se => height - 45 - se / yMax * (height - 80);
+
+      const points = ns.map((n, i) => `${sx(n).toFixed(2)},${sy(ses[i]).toFixed(2)}`).join(" ");
+      const currentSE = sigma / Math.sqrt(currentN);
+
+      return `
+        <div class="svg-wrap">
+          <svg viewBox="0 0 ${width} ${height}" width="100%">
+            <rect x="0" y="0" width="${width}" height="${height}" fill="#fff"/>
+            <text x="60" y="22" font-size="16" font-weight="bold">Reducción del Error Estándar</text>
+            <line x1="60" y1="${height - 45}" x2="${width - 40}" y2="${height - 45}" stroke="#444" stroke-width="1.5"/>
+            <line x1="60" y1="25" x2="60" y2="${height - 45}" stroke="#444" stroke-width="1.5"/>
+            <polyline points="${points}" fill="none" stroke="#1f77b4" stroke-width="3"/>
+            <circle cx="${sx(currentN).toFixed(2)}" cy="${sy(currentSE).toFixed(2)}" r="7" fill="#d62728"/>
+            <text x="${(sx(currentN) + 8).toFixed(2)}" y="${(sy(currentSE) - 8).toFixed(2)}" font-size="14">
+              n=${currentN}, SE=${fmt(currentSE, 3)} ${unit}
+            </text>
+            <text x="${width / 2 - 90}" y="${height - 12}" font-size="14">Tamaño de muestra n</text>
+            <text x="16" y="30" font-size="14">SE</text>
+          </svg>
+        </div>
+      `;
+    }
+
+    function svgInterval(li, ls, estimator, isProportion, unit) {
+      const width = 840;
+      const height = 135;
+      let margin = (ls - li) * 0.35;
+
+      if (!Number.isFinite(margin) || margin === 0) {
+        margin = 1;
+      }
+
+      const xMin = li - margin;
+      const xMax = ls + margin;
+      const sx = x => 55 + (x - xMin) / (xMax - xMin) * (width - 110);
+      const y = 65;
+
+      function label(x) {
+        return isProportion ? pct(x, 2) : `${fmt(x, 4)} ${unit}`;
+      }
+
+      return `
+        <div class="svg-wrap">
+          <svg viewBox="0 0 ${width} ${height}" width="100%">
+            <rect width="${width}" height="${height}" fill="#fff"/>
+            <text x="55" y="22" font-size="16" font-weight="bold">Visualización del intervalo de confianza</text>
+            <line x1="${sx(li).toFixed(2)}" y1="${y}" x2="${sx(ls).toFixed(2)}" y2="${y}"
+                  stroke="#1f77b4" stroke-width="9" stroke-linecap="round"/>
+            <circle cx="${sx(li).toFixed(2)}" cy="${y}" r="7" fill="#1f77b4"/>
+            <circle cx="${sx(ls).toFixed(2)}" cy="${y}" r="7" fill="#1f77b4"/>
+            <circle cx="${sx(estimator).toFixed(2)}" cy="${y}" r="9" fill="#d62728"/>
+            <text x="${(sx(li) - 35).toFixed(2)}" y="108" font-size="13">LI ${label(li)}</text>
+            <text x="${(sx(ls) - 35).toFixed(2)}" y="108" font-size="13">LS ${label(ls)}</text>
+            <text x="${(sx(estimator) - 55).toFixed(2)}" y="48" font-size="13">Estimador ${label(estimator)}</text>
+          </svg>
+        </div>
+      `;
+    }
+
+    /*
+      ============================================================
+      INTERPRETACIÓN AUTOMÁTICA
+      ============================================================
+    */
+
+    function interpretTCL(context, probability, question) {
+      const p = probability;
+
+      let intensity;
+      if (p < 0.01) {
+        intensity = "muy baja";
+      } else if (p < 0.05) {
+        intensity = "baja";
+      } else if (p < 0.20) {
+        intensity = "moderada";
+      } else if (p < 0.80) {
+        intensity = "considerable";
+      } else {
+        intensity = "alta";
+      }
+
+      return `
+        En el contexto: <b>${escapeHTML(context)}</b>, la probabilidad asociada a
+        <b>${question}</b> es <b>${pct(p, 4)}</b>, lo cual puede considerarse una probabilidad
+        <b>${intensity}</b>. Desde una perspectiva empresarial, este resultado permite dimensionar
+        el riesgo o la oportunidad del escenario. Si el evento representa un costo, sobrecarga,
+        demora o incumplimiento, la organización debería diseñar controles proporcionales a esa probabilidad.
+        Si el evento representa un resultado favorable, puede usarse como evidencia para apoyar la decisión.
+      `;
+    }
+
+    function recommendationIC(context, li, ls, estimator, isProportion, unit, goalRaw) {
+      const ctx = context.toLowerCase();
+
+      if (goalRaw !== "") {
+        let goal = parseFloat(goalRaw);
+
+        if (!Number.isNaN(goal)) {
+          if (isProportion && goal > 1) {
+            goal = goal / 100;
+          }
+
+          if (li > goal) {
+            return isProportion
+              ? `Incluso el límite inferior (${pct(li, 2)}) supera la meta (${pct(goal, 2)}). La evidencia favorece la decisión gerencial.`
+              : `Incluso el límite inferior (${fmt(li, 4)} ${unit}) supera la meta (${goal} ${unit}). La evidencia es favorable.`;
+          }
+
+          if (ls < goal) {
+            return isProportion
+              ? `Incluso el límite superior (${pct(ls, 2)}) está por debajo de la meta (${pct(goal, 2)}). Conviene replantear la estrategia.`
+              : `Incluso el límite superior (${fmt(ls, 4)} ${unit}) está por debajo de la meta (${goal} ${unit}). Conviene replantear la estrategia.`;
+          }
+
+          return isProportion
+            ? `La meta (${pct(goal, 2)}) cae dentro del intervalo. Existe incertidumbre; se recomienda recolectar más información antes de decidir.`
+            : `La meta (${goal} ${unit}) cae dentro del intervalo. Existe incertidumbre; se recomienda ampliar la muestra.`;
+        }
+      }
+
+      if (isProportion) {
+        if (ctx.includes("gaseosa") || ctx.includes("aceptación") || ctx.includes("aceptacion")) {
+          return `La proporción real podría estar entre ${pct(li, 2)} y ${pct(ls, 2)}. Si la meta comercial es superar 50%, el intervalo sugiere cautela antes de un lanzamiento masivo.`;
+        }
+
+        if (ctx.includes("fallos") || ctx.includes("software")) {
+          return `La tasa real de fallos podría estar entre ${pct(li, 2)} y ${pct(ls, 2)}. Se recomienda dimensionar soporte técnico con el límite superior.`;
+        }
+
+        if (ctx.includes("híbrida") || ctx.includes("hibrida")) {
+          return `La preferencia real por modalidad híbrida podría estar entre ${pct(li, 2)} y ${pct(ls, 2)}. Esto respalda diseñar una política híbrida formal.`;
+        }
+
+        return `La proporción poblacional plausible está entre ${pct(li, 2)} y ${pct(ls, 2)}. Para decisiones prudentes, compare la meta gerencial con el límite inferior.`;
+      }
+
+      if (ctx.includes("fibras")) {
+        return `Gestionar calidad considerando que la resistencia media real está entre ${fmt(li, 2)} y ${fmt(ls, 2)} ${unit}. Si el estándar mínimo supera el límite inferior, se recomienda reforzar control de calidad.`;
+      }
+
+      if (ctx.includes("fletes")) {
+        return `Para cotizaciones conservadoras, use el límite superior ${fmt(ls, 3)} ${unit}. Esto reduce el riesgo de subestimar costos operativos.`;
+      }
+
+      if (ctx.includes("empaques")) {
+        return `Compare el límite inferior ${fmt(li, 2)} ${unit} con el estándar mínimo de empaque. Si queda por debajo, se recomienda ajustar el proceso.`;
+      }
+
+      if (ctx.includes("mochilas")) {
+        return `La media plausible está entre ${fmt(li, 2)} y ${fmt(ls, 2)} ${unit}. Como la muestra es pequeña, conviene recolectar más datos antes de fijar metas.`;
+      }
+
+      if (ctx.includes("marketing")) {
+        return `Planear caja entre ${fmt(li, 2)} y ${fmt(ls, 2)} ${unit}. Para un presupuesto prudente, use el límite superior.`;
+      }
+
+      if (ctx.includes("incapacidad")) {
+        return `Si el límite superior ${fmt(ls, 2)} ${unit} afecta la capacidad productiva, se recomienda revisar turnos, ergonomía y prevención de riesgos.`;
+      }
+
+      return `El parámetro poblacional plausible está entre ${fmt(li, 4)} y ${fmt(ls, 4)} ${unit}. Para decisiones conservadoras, use el límite más desfavorable.`;
+    }
+
+    function escapeHTML(text) {
+      return String(text)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    /*
+      ============================================================
+      MÓDULO 1: TCL
+      ============================================================
+    */
+
+    function toggleTCLInputs() {
+      const type = document.getElementById("tclType").value;
+      document.getElementById("tclSingleLimitBox").classList.toggle("hide", type === "between");
+      document.getElementById("tclBetweenBox").classList.toggle("hide", type !== "between");
+    }
+
+    function calculateTCL() {
+      const output = document.getElementById("tclOutput");
+
+      try {
+        const context = document.getElementById("tclContext").value.trim();
+        const mu = getNumber("tclMu");
+        const sigma = getNumber("tclSigma");
+        const n = getInteger("tclN");
+        const type = document.getElementById("tclType").value;
+        const observed = getNumber("tclObserved");
+        const unit = document.getElementById("tclUnit") ? document.getElementById("tclUnit").value : "";
+
+        if (sigma <= 0) {
+          throw new Error("La desviación estándar σ debe ser positiva.");
+        }
+
+        if (n <= 0) {
+          throw new Error("El tamaño de muestra n debe ser positivo.");
+        }
+
+        const se = sigma / Math.sqrt(n);
+        const sampleError = observed - mu;
+
+        let zText = "";
+        let probability = 0;
+        let procedure = "";
+        let question = "";
+        let graphArea = "";
+
+        if (type === "greater") {
+          const limit = getNumber("tclLimit");
+          const z = (limit - mu) / se;
+          probability = 1 - normalCDF(z);
+          zText = fmt(z, 6);
+          question = `P(X̄ > ${limit})`;
+          procedure = `Z = (${limit} − ${mu}) / (${sigma}/√${n}) = ${fmt(z, 6)}`;
+          graphArea = svgBellCurve(mu, se, "greater", {
+            limit,
+            title: "Distribución de la media muestral X̄",
+            xLabel: "Media muestral X̄"
+          });
+        }
+
+        if (type === "less") {
+          const limit = getNumber("tclLimit");
+          const z = (limit - mu) / se;
+          probability = normalCDF(z);
+          zText = fmt(z, 6);
+          question = `P(X̄ < ${limit})`;
+          procedure = `Z = (${limit} − ${mu}) / (${sigma}/√${n}) = ${fmt(z, 6)}`;
+          graphArea = svgBellCurve(mu, se, "less", {
+            limit,
+            title: "Distribución de la media muestral X̄",
+            xLabel: "Media muestral X̄"
+          });
+        }
+
+        if (type === "between") {
+          const lower = getNumber("tclLower");
+          const upper = getNumber("tclUpper");
+
+          if (lower >= upper) {
+            throw new Error("El límite inferior debe ser menor que el límite superior.");
+          }
+
+          const z1 = (lower - mu) / se;
+          const z2 = (upper - mu) / se;
+
+          probability = normalCDF(z2) - normalCDF(z1);
+          zText = `${fmt(z1, 6)} a ${fmt(z2, 6)}`;
+          question = `P(${lower} < X̄ < ${upper})`;
+          procedure = `
+            Z₁ = (${lower} − ${mu}) / (${sigma}/√${n}) = ${fmt(z1, 6)}<br>
+            Z₂ = (${upper} − ${mu}) / (${sigma}/√${n}) = ${fmt(z2, 6)}
+          `;
+          graphArea = svgBellCurve(mu, se, "between", {
+            lower,
+            upper,
+            title: "Distribución de la media muestral X̄",
+            xLabel: "Media muestral X̄"
+          });
+        }
+
+        if (type === "sumGreater") {
+          const limit = getNumber("tclLimit");
+          const meanSum = n * mu;
+          const sdSum = sigma * Math.sqrt(n);
+          const z = (limit - meanSum) / sdSum;
+
+          probability = 1 - normalCDF(z);
+          zText = fmt(z, 6);
+          question = `P(Suma > ${limit})`;
+          procedure = `
+            E(S) = nμ = ${n}×${mu} = ${fmt(meanSum, 6)}<br>
+            SD(S) = σ√n = ${sigma}√${n} = ${fmt(sdSum, 6)}<br>
+            Z = (${limit} − ${fmt(meanSum, 6)}) / ${fmt(sdSum, 6)} = ${fmt(z, 6)}
+          `;
+          graphArea = svgBellCurve(meanSum, sdSum, "greater", {
+            limit,
+            title: "Distribución de la suma total S",
+            xLabel: "Suma total"
+          });
+        }
+
+        const ns = document.getElementById("tclNs").value
+          .split(",")
+          .map(x => parseInt(x.trim(), 10))
+          .filter(x => Number.isFinite(x) && x > 0);
+
+        output.innerHTML = `
+          <span class="tag">Resultado TCL</span>
+          <h3>${escapeHTML(context || "Escenario personalizado")}</h3>
+
+          <div class="kpi">
+            <div><span>Error Estándar SE</span><b>${fmt(se, 6)}</b></div>
+            <div><span>Error muestral</span><b>${fmt(sampleError, 6)}</b></div>
+            <div><span>Z</span><b>${zText}</b></div>
+            <div><span>Probabilidad</span><b>${pct(probability, 4)}</b></div>
+          </div>
+
+          <div class="eq">Error muestral = x̄ − μ = ${observed} − ${mu} = <b>${fmt(sampleError, 6)}</b></div>
+          <div class="eq">SE = σ / √n = ${sigma} / √${n} = <b>${fmt(se, 6)}</b></div>
+          <div class="eq">${procedure}</div>
+
+          <p class="result"><b>${question}</b> = <b>${pct(probability, 4)}</b></p>
+
+          <p class="warning">
+            <b>Interpretación analítica:</b> ${interpretTCL(context, probability, question)}
+          </p>
+
+          ${graphArea}
+          ${ns.length > 0 ? svgCompareN(mu, sigma, ns, unit) : ""}
+          ${svgSECurve(sigma, n, unit)}
+        `;
+      } catch (error) {
+        output.innerHTML = `<div class="error"><b>Error:</b> ${error.message}</div>`;
+      }
+    }
+
+    /*
+      ============================================================
+      MÓDULO 2: ERRORES
+      ============================================================
+    */
+
+    function calculateErrors() {
+      const output = document.getElementById("errorsOutput");
+
+      try {
+        const mu = getNumber("errMu");
+        const observed = getNumber("errObserved");
+        const sigma = getNumber("errSigma");
+        const n = getInteger("errN");
+
+        if (sigma <= 0) {
+          throw new Error("La desviación estándar debe ser positiva.");
+        }
+
+        if (n <= 0) {
+          throw new Error("n debe ser positivo.");
+        }
+
+        const sampleError = observed - mu;
+        const se = sigma / Math.sqrt(n);
+
+        output.innerHTML = `
+          <span class="tag">Errores</span>
+          <h3>Diferencia entre error muestral y Error Estándar</h3>
+
+          <div class="kpi">
+            <div><span>Error muestral</span><b>${fmt(sampleError, 6)}</b></div>
+            <div><span>Error Estándar SE</span><b>${fmt(se, 6)}</b></div>
+          </div>
+
+          <div class="eq">Error muestral = x̄ − μ = ${observed} − ${mu} = <b>${fmt(sampleError, 6)}</b></div>
+          <div class="eq">Error Estándar = SE = σ / √n = ${sigma} / √${n} = <b>${fmt(se, 6)}</b></div>
+
+          <p class="result">
+            <b>Concepto:</b> el error muestral es una diferencia observada para una muestra específica.
+            El Error Estándar no depende de una muestra observada, sino de σ y n; mide cuánto variarían
+            las medias muestrales si se repite el muestreo muchas veces.
+          </p>
+
+          <p class="warning">
+            <b>Implicación:</b> aumentar n reduce el Error Estándar, por lo tanto las estimaciones
+            de la media poblacional son más precisas.
+          </p>
+
+          ${svgSECurve(sigma, n, "")}
+        `;
+      } catch (error) {
+        output.innerHTML = `<div class="error"><b>Error:</b> ${error.message}</div>`;
+      }
+    }
+
+    /*
+      ============================================================
+      MÓDULO 3: INTERVALOS DE CONFIANZA
+      ============================================================
+    */
+
+    function toggleICInputs() {
+      const type = document.getElementById("icType").value;
+      const sigmaKnown = document.getElementById("icSigmaKnown").value;
+
+      document.getElementById("icMeanInputs").classList.toggle("hide", type !== "mean");
+      document.getElementById("icPropInputs").classList.toggle("hide", type !== "proportion");
+
+      document.getElementById("icSigmaBox").classList.toggle("hide", !(type === "mean" && sigmaKnown === "yes"));
+      document.getElementById("icSBox").classList.toggle("hide", !(type === "mean" && sigmaKnown === "no"));
+    }
+
+    function calculateIC() {
+      const output = document.getElementById("icOutput");
+
+      try {
+        const context = document.getElementById("icContext").value.trim();
+        const type = document.getElementById("icType").value;
+        const confidence = parseFloat(document.getElementById("icConfidence").value);
+        const n = getInteger("icN");
+        const unit = document.getElementById("icUnit").value;
+        const goalRaw = document.getElementById("icGoal").value.trim();
+
+        if (n <= 0) {
+          throw new Error("El tamaño de muestra n debe ser positivo.");
+        }
+
+        let model = "";
+        let reason = "";
+        let formula = "";
+        let estimator = 0;
+        let se = 0;
+        let critical = 0;
+        let margin = 0;
+        let li = 0;
+        let ls = 0;
+        let isProportion = false;
+
+        if (type === "mean") {
+          const xbar = getNumber("icXbar");
+          estimator = xbar;
+
+          const sigmaKnown = document.getElementById("icSigmaKnown").value;
+
+          if (sigmaKnown === "yes") {
+            const sigma = getNumber("icSigma");
+
+            if (sigma <= 0) {
+              throw new Error("σ debe ser positiva.");
+            }
+
+            critical = zCritical(confidence);
+            se = sigma / Math.sqrt(n);
+            model = "Distribución Z";
+            reason = "Se usa Z porque la desviación estándar poblacional σ es conocida.";
+            formula = `IC = x̄ ± Z(σ/√n) = ${xbar} ± ${fmt(critical, 4)}(${sigma}/√${n})`;
+          } else {
+            const s = getNumber("icS");
+
+            if (s <= 0) {
+              throw new Error("s debe ser positiva.");
+            }
+
+            se = s / Math.sqrt(n);
+
+            if (n < 30) {
+              critical = tCritical(confidence, n - 1);
+              model = `Distribución t de Student, gl=${n - 1}`;
+              reason = "Se usa t porque σ es desconocida, se reemplaza por s y la muestra es pequeña.";
+              formula = `IC = x̄ ± t(s/√n) = ${xbar} ± ${fmt(critical, 4)}(${s}/√${n})`;
+            } else {
+              critical = zCritical(confidence);
+              model = "Distribución Z aproximada";
+              reason = "Se usa Z aproximada porque σ es desconocida, pero n es grande y aplica el TCL.";
+              formula = `IC = x̄ ± Z(s/√n) = ${xbar} ± ${fmt(critical, 4)}(${s}/√${n})`;
+            }
+          }
+
+          margin = critical * se;
+          li = estimator - margin;
+          ls = estimator + margin;
+        } else {
+          isProportion = true;
+
+          const x = getInteger("icSuccess");
+
+          if (x < 0 || x > n) {
+            throw new Error("El número de éxitos x debe estar entre 0 y n.");
+          }
+
+          estimator = x / n;
+          critical = zCritical(confidence);
+          se = Math.sqrt(estimator * (1 - estimator) / n);
+          margin = critical * se;
+          li = clamp(estimator - margin, 0, 1);
+          ls = clamp(estimator + margin, 0, 1);
+
+          model = "Modelo Z para proporciones";
+          reason = "Se usa proporciones porque el parámetro de interés es p y se estima con p̂ = x/n.";
+          formula = `p̂ = x/n = ${x}/${n} = ${fmt(estimator, 6)}<br>IC = p̂ ± Z√(p̂(1−p̂)/n)`;
+        }
+
+        const intervalLabel = isProportion
+          ? `[${pct(li, 2)}, ${pct(ls, 2)}]`
+          : `[${fmt(li, 6)}, ${fmt(ls, 6)}] ${unit}`;
+
+        const estimatorLabel = isProportion
+          ? pct(estimator, 4)
+          : `${fmt(estimator, 6)} ${unit}`;
+
+        output.innerHTML = `
+          <span class="tag">Resultado IC</span>
+          <h3>${escapeHTML(context || "Intervalo personalizado")}</h3>
+
+          <p><b>Método elegido automáticamente:</b> ${model}</p>
+          <p><b>Justificación:</b> ${reason}</p>
+
+          <div class="kpi">
+            <div><span>Estimador</span><b>${estimatorLabel}</b></div>
+            <div><span>SE</span><b>${fmt(se, 6)}</b></div>
+            <div><span>Valor crítico</span><b>${fmt(critical, 6)}</b></div>
+            <div><span>Margen de error</span><b>${fmt(margin, 6)}</b></div>
+          </div>
+
+          <div class="eq">${formula}</div>
+          <div class="eq">Margen de error = valor crítico × SE = ${fmt(critical, 6)} × ${fmt(se, 6)} = <b>${fmt(margin, 6)}</b></div>
+
+          <p class="result"><b>Intervalo de confianza ${pct(confidence, 0)}:</b> ${intervalLabel}</p>
+
+          ${svgInterval(li, ls, estimator, isProportion, unit)}
+
+          <p class="warning">
+            <b>Interpretación gerencial:</b>
+            ${recommendationIC(context, li, ls, estimator, isProportion, unit, goalRaw)}
+          </p>
+        `;
+      } catch (error) {
+        output.innerHTML = `<div class="error"><b>Error:</b> ${error.message}</div>`;
+      }
+    }
+
+    /*
+      ============================================================
+      CASOS REALES PRECARGADOS
+      ============================================================
+    */
+
+    const tclCases = [
+      {
+        label: "Caso 1: CEO-Energía",
+        context: "CEO-Energía: auditoría de consumo energético en hogares de Popayán.",
+        mu: 180,
+        sigma: 45,
+        n: 40,
+        type: "greater",
+        limit: 195,
+        observed: 195,
+        ns: "5,10,30,40,100"
+      },
+      {
+        label: "Caso 2: Banca Local",
+        context: "Banca Local: tiempo de atención en ventanilla para clientes un lunes.",
+        mu: 12,
+        sigma: 4,
+        n: 50,
+        type: "less",
+        limit: 10.5,
+        observed: 10.5,
+        ns: "5,10,30,50,100"
+      },
+      {
+        label: "Caso 3: Servi-Logística",
+        context: "Servi-Logística: vehículo que transporta paquetes y puede exceder el límite de carga.",
+        mu: 20,
+        sigma: 5,
+        n: 35,
+        type: "sumGreater",
+        limit: 750,
+        observed: 750 / 35,
+        ns: "5,10,30,35,100"
+      },
+      {
+        label: "Caso 4: Sueldos",
+        context: "Sueldos: estudio de ingresos medios en el sector comercio del Cauca.",
+        mu: 2.5,
+        sigma: 0.8,
+        n: 100,
+        type: "between",
+        lower: 2.3,
+        upper: 2.7,
+        observed: 2.5,
+        ns: "10,30,50,100,200"
+      },
+      {
+        label: "Caso 5: Café del Cauca",
+        context: "Café del Cauca: peso promedio de bolsas de exportación.",
+        mu: 500,
+        sigma: 10,
+        n: 45,
+        type: "greater",
+        limit: 503,
+        observed: 503,
+        ns: "5,10,30,45,100"
+      }
+    ];
+
+    const icCases = [
+      {
+        label: "σ conocida: Fibras textiles",
+        context: "Resistencia de fibras en textiles de la región.",
+        type: "mean",
+        n: 40,
+        xbar: 50,
+        sigmaKnown: "yes",
+        sigma: 4,
+        s: 4,
+        unit: "resistencia"
+      },
+      {
+        label: "σ conocida: Fletes",
+        context: "Costos operativos de fletes intermunicipales.",
+        type: "mean",
+        n: 35,
+        xbar: 1.2,
+        sigmaKnown: "yes",
+        sigma: 0.2,
+        s: 0.2,
+        unit: "M COP"
+      },
+      {
+        label: "σ conocida: Empaques",
+        context: "Peso neto de empaques para retail nacional.",
+        type: "mean",
+        n: 50,
+        xbar: 22,
+        sigmaKnown: "yes",
+        sigma: 1.5,
+        s: 1.5,
+        unit: "peso"
+      },
+      {
+        label: "σ desconocida: Mochilas",
+        context: "Producción artesanal de mochilas.",
+        type: "mean",
+        n: 15,
+        xbar: 22,
+        sigmaKnown: "no",
+        sigma: "",
+        s: 4,
+        unit: "mochilas"
+      },
+      {
+        label: "σ desconocida: Marketing",
+        context: "Presupuesto mensual de marketing en PyMEs.",
+        type: "mean",
+        n: 10,
+        xbar: 3.5,
+        sigmaKnown: "no",
+        sigma: "",
+        s: 0.8,
+        unit: "M COP"
+      },
+      {
+        label: "σ desconocida: Incapacidad",
+        context: "Días de incapacidad en planta de producción.",
+        type: "mean",
+        n: 12,
+        xbar: 18,
+        sigmaKnown: "no",
+        sigma: "",
+        s: 3.5,
+        unit: "días"
+      },
+      {
+        label: "Proporción: Gaseosa",
+        context: "Nivel de aceptación de nueva marca de gaseosa.",
+        type: "proportion",
+        n: 1000,
+        x: 450,
+        unit: "%",
+        goal: "0.5"
+      },
+      {
+        label: "Proporción: Fallos software",
+        context: "Tasa de fallos en el software de inventarios.",
+        type: "proportion",
+        n: 500,
+        x: 15,
+        unit: "%",
+        goal: ""
+      },
+      {
+        label: "Proporción: Modalidad híbrida",
+        context: "Empleados que prefieren modalidad híbrida.",
+        type: "proportion",
+        n: 250,
+        x: 180,
+        unit: "%",
+        goal: ""
+      }
+    ];
+
+    function buildCaseButtons() {
+      const tclDiv = document.getElementById("tclCaseButtons");
+      const icDiv = document.getElementById("icCaseButtons");
+
+      tclDiv.innerHTML = tclCases
+        .map((c, i) => `<button class="light" onclick="loadTCLCase(${i})">${c.label}</button>`)
+        .join("");
+
+      icDiv.innerHTML = icCases
+        .map((c, i) => `<button class="light" onclick="loadICCase(${i})">${c.label}</button>`)
+        .join("");
+    }
+
+    function loadTCLCase(index) {
+      const c = tclCases[index];
+
+      document.getElementById("tclContext").value = c.context;
+      document.getElementById("tclMu").value = c.mu;
+      document.getElementById("tclSigma").value = c.sigma;
+      document.getElementById("tclN").value = c.n;
+      document.getElementById("tclType").value = c.type;
+      document.getElementById("tclObserved").value = c.observed;
+      document.getElementById("tclNs").value = c.ns;
+
+      if (c.limit !== undefined) {
+        document.getElementById("tclLimit").value = c.limit;
+      }
+
+      if (c.lower !== undefined) {
+        document.getElementById("tclLower").value = c.lower;
+      }
+
+      if (c.upper !== undefined) {
+        document.getElementById("tclUpper").value = c.upper;
+      }
+
+      toggleTCLInputs();
+      location.hash = "#modulo-tcl";
+      calculateTCL();
+    }
+
+    function loadICCase(index) {
+      const c = icCases[index];
+
+      document.getElementById("icContext").value = c.context;
+      document.getElementById("icType").value = c.type;
+      document.getElementById("icConfidence").value = "0.95";
+      document.getElementById("icN").value = c.n;
+      document.getElementById("icUnit").value = c.unit || "";
+      document.getElementById("icGoal").value = c.goal || "";
+
+      if (c.type === "mean") {
+        document.getElementById("icXbar").value = c.xbar;
+        document.getElementById("icSigmaKnown").value = c.sigmaKnown;
+        document.getElementById("icSigma").value = c.sigma;
+        document.getElementById("icS").value = c.s;
+      } else {
+        document.getElementById("icSuccess").value = c.x;
+      }
+
+      toggleICInputs();
+      location.hash = "#modulo-ic";
+      calculateIC();
+    }
+
+    function computeTCLCase(c) {
+      const se = c.sigma / Math.sqrt(c.n);
+      let zText = "";
+      let prob = 0;
+
+      if (c.type === "greater") {
+        const z = (c.limit - c.mu) / se;
+        zText = fmt(z, 4);
+        prob = 1 - normalCDF(z);
+      } else if (c.type === "less") {
+        const z = (c.limit - c.mu) / se;
+        zText = fmt(z, 4);
+        prob = normalCDF(z);
+      } else if (c.type === "between") {
+        const z1 = (c.lower - c.mu) / se;
+        const z2 = (c.upper - c.mu) / se;
+        zText = `${fmt(z1, 4)} a ${fmt(z2, 4)}`;
+        prob = normalCDF(z2) - normalCDF(z1);
+      } else {
+        const meanSum = c.n * c.mu;
+        const sdSum = c.sigma * Math.sqrt(c.n);
+        const z = (c.limit - meanSum) / sdSum;
+        zText = fmt(z, 4);
+        prob = 1 - normalCDF(z);
+      }
+
+      return { se, zText, prob };
+    }
+
+    function computeICCase(c) {
+      const confidence = 0.95;
+      let estimator = 0;
+      let se = 0;
+      let critical = 0;
+      let model = "";
+      let li = 0;
+      let ls = 0;
+      let isProportion = c.type === "proportion";
+
+      if (c.type === "mean") {
+        estimator = c.xbar;
+
+        if (c.sigmaKnown === "yes") {
+          critical = zCritical(confidence);
+          se = c.sigma / Math.sqrt(c.n);
+          model = "Z";
+        } else {
+          if (c.n < 30) {
+            critical = tCritical(confidence, c.n - 1);
+            model = "t";
+          } else {
+            critical = zCritical(confidence);
+            model = "Z aproximada";
+          }
+
+          se = c.s / Math.sqrt(c.n);
+        }
+
+        const margin = critical * se;
+        li = estimator - margin;
+        ls = estimator + margin;
+      } else {
+        estimator = c.x / c.n;
+        critical = zCritical(confidence);
+        se = Math.sqrt(estimator * (1 - estimator) / c.n);
+        const margin = critical * se;
+        li = clamp(estimator - margin, 0, 1);
+        ls = clamp(estimator + margin, 0, 1);
+        model = "Proporciones Z";
+      }
+
+      return { estimator, se, critical, model, li, ls, isProportion };
+    }
+
+    function solveAllCases() {
+      const tclRows = tclCases.map(c => {
+        const r = computeTCLCase(c);
+
+        return `
+          <tr>
+            <td>${c.label}</td>
+            <td>${c.n}</td>
+            <td>${fmt(r.se, 4)}</td>
+            <td>${r.zText}</td>
+            <td>${pct(r.prob, 4)}</td>
+          </tr>
+        `;
+      }).join("");
+
+      const icRows = icCases.map(c => {
+        const r = computeICCase(c);
+        const estimator = r.isProportion ? pct(r.estimator, 2) : `${fmt(r.estimator, 4)} ${c.unit}`;
+        const li = r.isProportion ? pct(r.li, 2) : `${fmt(r.li, 4)} ${c.unit}`;
+        const ls = r.isProportion ? pct(r.ls, 2) : `${fmt(r.ls, 4)} ${c.unit}`;
+
+        return `
+          <tr>
+            <td>${c.label}</td>
+            <td>${r.model}</td>
+            <td>${estimator}</td>
+            <td>${fmt(r.se, 4)}</td>
+            <td>${li}</td>
+            <td>${ls}</td>
+          </tr>
+        `;
+      }).join("");
+
+      document.getElementById("allCasesOutput").innerHTML = `
+        <div class="card">
+          <h3>Resumen Bloque TCL</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Caso</th>
+                <th>n</th>
+                <th>SE</th>
+                <th>Z</th>
+                <th>Probabilidad</th>
+              </tr>
+            </thead>
+            <tbody>${tclRows}</tbody>
+          </table>
+
+          <h3>Resumen Bloque Intervalos de Confianza</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Caso</th>
+                <th>Método</th>
+                <th>Estimador</th>
+                <th>SE</th>
+                <th>LI</th>
+                <th>LS</th>
+              </tr>
+            </thead>
+            <tbody>${icRows}</tbody>
+          </table>
+
+          <p class="warning">
+            Para ver la explicación completa y las gráficas de un caso específico,
+            presiona el botón correspondiente del Bloque TCL o del Bloque IC.
+          </p>
+        </div>
+      `;
+    }
+
+    /*
+      Inicialización de la página.
+    */
+    toggleTCLInputs();
+    toggleICInputs();
+    buildCaseButtons();
+    calculateTCL();
+    calculateErrors();
+    calculateIC();
+  
+  </script>
+</body>
+</html>
