@@ -1,2 +1,0 @@
-# Sin dependencias externas.
-# Funciona con Python estándar >= 3.10.
