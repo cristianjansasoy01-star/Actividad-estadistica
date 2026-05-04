@@ -1,0 +1,10 @@
+[project]
+name = "simulador-unicauca-python-pro"
+version = "1.0.0"
+description = "Simulador visual de Estadística Inferencial para TCL e Intervalos de Confianza."
+requires-python = ">=3.10"
+dependencies = []
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
